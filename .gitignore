@@ -1,0 +1,3 @@
+node_modules
+tests/collection.json
+tests/testing.sqlite

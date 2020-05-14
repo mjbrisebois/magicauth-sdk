@@ -1,0 +1,29 @@
+{
+  "name": "@whi/magicauth-sdk",
+  "version": "0.1.0",
+  "description": "The Javascript standard development kit for MagicAuth services",
+  "main": "src/index.js",
+  "files": [
+    "README.md"
+  ],
+  "dependencies": {
+    "@whi/http": "^0.2.1",
+    "@whi/stdlog": "^0.3.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "knex": "^0.21.1",
+    "mocha": "^7.1.2",
+    "sqlite3": "^4.2.0",
+    "superstruct": "^0.8.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Matthew Brisebois",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mjbrisebois/magicauth-sdk"
+  }
+}
