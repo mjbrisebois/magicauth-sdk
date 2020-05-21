@@ -4,9 +4,18 @@ const log				= require('@whi/stdlog')(path.basename( __filename ), {
 });
 
 const http_client			= require('@whi/http').client;
-
+const anonymous				= http_client.create(`http://localhost:2884`, {
+    headers: {
+	"Content-Type": "application/json",
+    },
+});
 
 class Collection {
+
+    static async create () {
+	return await anonymous.post("/collections");
+    }
+
     constructor ( collection_id, access_key, bindings ) {
 	this.collection_id		= collection_id;
 	this.access_key			= access_key;
