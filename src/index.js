@@ -3,16 +3,23 @@ const log				= require('@whi/stdlog')(path.basename( __filename ), {
     level: process.env.LOG_LEVEL || 'fatal',
 });
 
+const ip				= require('ip');
+const UserAgent				= require('ua-parser-js');
 const http_client			= require('@whi/http').client;
-const anonymous				= http_client.create(`http://localhost:2884`, {
-    headers: {
-	"Content-Type": "application/json",
-    },
-});
+
+function error_check ( response ) {
+    if ( response.status || response.error )
+	throw new Error(`${response.status} ${response.error}: ${response.message}`);
+}
 
 class Collection {
 
     static async create () {
+	const anonymous				= http_client.create( public_vars.API_BASE_URL, {
+	    headers: {
+		"Content-Type": "application/json",
+	    },
+	});
 	return await anonymous.post("/collections");
     }
 
@@ -21,7 +28,7 @@ class Collection {
 	this.access_key			= access_key;
 	this.bindings			= bindings;
 
-	this.api			= http_client.create(`http://localhost:2884`, {
+	this.api			= http_client.create( public_vars.API_BASE_URL, {
 	    headers: {
 		"Content-Type": "application/json",
 		"Authorization": `Authentic ${access_key}`,
@@ -30,20 +37,32 @@ class Collection {
     }
 
     async user ( password ) {
-	const user			= await this.api.post("/credentials", {
-	    "collection_id":	this.collection_id,
+	const user			= await this.api.post(`/collections/${this.collection_id}/credentials`, {
 	    "password":		password,
 	});
+	log.debug("POST credentials response: %s", user );
+	error_check( user );
 	return new User( user );
     }
 
+    async update_password ( credential_id, current_password, password ) {
+	const credential		= await this.api.put(`/credentials/${credential_id}`, {
+	    current_password,
+	    password,
+	});
+	log.debug("PUT credentials response: %s", credential );
+	error_check( credential );
+	return new User( credential );
+    }
+
     async session ( credential_id, password, ip_address, user_agent ) {
-	const session			= await this.api.post(`/sessions`, {
-	    credential_id,
+	const session			= await this.api.post(`/credentials/${credential_id}/sessions`, {
 	    password,
 	    ip_address,
 	    user_agent,
 	});
+	log.debug("POST sessions response: %s", session );
+	error_check( session );
 	return new Session( session );
     }
 
@@ -52,6 +71,8 @@ class Collection {
 	    ip_address,
 	    user_agent,
 	});
+	log.debug("GET session response: %s", session );
+	error_check( session );
 	return new Session( session );
     }
 }
@@ -72,8 +93,40 @@ class Session {
     }
 }
 
+const compare = {
+    userAgents ( request_user_agent, session_user_agent ) {
+	const request_ua		= (new UserAgent( request_user_agent )).getResult();
+	const session_ua		= (new UserAgent( session_user_agent )).getResult();
 
-module.exports				= {
+	log.debug("Comparing user agents\n    %s\n    %s\n    %20.20s = %s\n    %20.20s = %s\n    %20.20s = %s",
+		  request_user_agent,
+		  session_user_agent,
+		  request_ua.cpu.architecture, session_ua.cpu.architecture,
+		  request_ua.os.name, session_ua.os.name,
+		  request_ua.browser.name, session_ua.browser.name );
+	if ( request_ua.cpu.architecture	!== session_ua.cpu.architecture
+	     || request_ua.os.name		!== session_ua.os.name
+	     || request_ua.browser.name	!== session_ua.browser.name
+	   ) {
+	    return false;
+	}
+	return true;
+    },
+
+    ipAddresses ( request_ip_address, session_ip_address ) {
+	log.debug("Comparing user IPs\n    %20.20s = %s",
+		  request_ip_address, session_ip_address );
+	return (ip.isPrivate( session_ip_address ) || ip.isEqual( request_ip_address, session_ip_address ));
+    },
+};
+
+
+const public_vars = {
+    "API_BASE_URL": "https://vault.magicauth.ca",
     Collection,
     User,
+    Session,
+    compare
 };
+
+module.exports				= public_vars;

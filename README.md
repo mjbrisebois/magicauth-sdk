@@ -3,9 +3,9 @@
 # MagicAuth SDK
 The Javascript standard development kit for MagicAuth services.
 
-![](https://img.shields.io/github/issues-raw/mjbrisebois/magicauth-sdk?style=flat-square)
-![](https://img.shields.io/github/issues-closed-raw/mjbrisebois/magicauth-sdk?style=flat-square)
-![](https://img.shields.io/github/issues-pr-raw/mjbrisebois/magicauth-sdk?style=flat-square)
+[![](https://img.shields.io/github/issues-raw/mjbrisebois/magicauth-sdk?style=flat-square)](https://github.com/mjbrisebois/magicauth-sdk/issues)
+[![](https://img.shields.io/github/issues-closed-raw/mjbrisebois/magicauth-sdk?style=flat-square)](https://github.com/mjbrisebois/magicauth-sdk/issues?q=is%3Aissue+is%3Aclosed)
+[![](https://img.shields.io/github/issues-pr-raw/mjbrisebois/magicauth-sdk?style=flat-square)](https://github.com/mjbrisebois/magicauth-sdk/pulls)
 
 ## Usage
 
@@ -34,6 +34,9 @@ const user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
 
 ### Sign Up
 
+- Initialized with `email/password`
+- Callback for `users.insert( email, Authentica.U1 )`.
+
 ```javascript
 let credential = await magicauth.user( password );
 
@@ -44,6 +47,11 @@ let credential = await magicauth.user( password );
 ```
 
 ### Sign In
+
+- Initialized with `email/password`
+- Callback for `users.select( email ) -> Authentica.U1`.
+  - if 0 results, return invalid
+- Callback for `sessions.insert( session_id, user.id, ...context )`.
 
 ```javascript
 let session = await magicauth.session( credential.id, password, ip_address, user_agent );
@@ -56,6 +64,13 @@ let session = await magicauth.session( credential.id, password, ip_address, user
 
 ### Session validation
 
+- Initialized by cookie `session ID`
+- Callback for `sessions.select( session_id, ...context ) -> user.id`.
+  - if expired, delete cookie
+  - if 0 results, check origin
+    - if exists, update local and restart this process
+    - else, delete cookie
+
 ```javascript
 let session = await magicauth.validate( session.id, ip_address, user_agent );
 
@@ -67,3 +82,9 @@ let session = await magicauth.validate( session.id, ip_address, user_agent );
     }
 }
 ```
+
+### Sign Out
+
+- Initialized with cookie `session ID`
+- Callback for `sessions.archive( session_id, ...context )`.
+  - delete cookie

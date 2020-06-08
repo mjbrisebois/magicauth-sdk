@@ -7,7 +7,9 @@ const expect				= require('chai').expect;
 
 const { id,
 	access_key }			= require('../collection.json');
-const { Collection }			= require('../../src/index.js');
+const sdk				= require('../../src/index.js');
+const { Collection }			= sdk;
+sdk.API_BASE_URL			= `http://localhost:2884`;
 
 
 const magicauth				= new Collection( id, access_key.key);
