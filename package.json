@@ -1,6 +1,6 @@
 {
   "name": "@whi/magicauth-sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "The Javascript standard development kit for MagicAuth services",
   "main": "src/index.js",
   "files": [
